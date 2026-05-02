@@ -151,52 +151,74 @@ In my code, I prevented deadlocks by strictly using the `try-finally` block. I p
 
 ### Critical Section #1: Counter Variables
 
-**Which variables**: 
+**Which variables**: `contextSwitchCount`, `completedProcessCount`, `totalWaitingTime`.
 
-**Why they need protection**: 
+**Why they need protection**: They are modified by multiple threads concurrently, which can cause lost updates due to non-atomic read-modify-write operations.
 
-**Synchronization mechanism used**: 
+**Synchronization mechanism used**: `ReentrantLock` (`statsLock`).
 
 **Code snippet**:
 ```java
-// Paste your implementation here
+public static void incrementContextSwitch() {
+    statsLock.lock();
+    try {
+        contextSwitchCount++;
+    } finally {
+        statsLock.unlock();
+    }
 ```
 
-**Justification**: 
+**Justification**: The lock ensures strict mutual exclusion, allowing only one thread to modify the counter at any specific moment, preserving the integrity of the calculations.
 
 ---
 
 ### Critical Section #2: Execution Log
 
-**What resource**: 
+**What resource**: List<String> executionLog (ArrayList).
 
-**Why it needs protection**: 
+**Why it needs protection**: ArrayList is not thread-safe. Concurrent structural modifications will cause a ConcurrentModificationException.
 
-**Synchronization mechanism used**: 
+**Synchronization mechanism used**: ReentrantLock (logLock).
 
 **Code snippet**:
 ```java
-// Paste your implementation here
+public static void logExecution(String message) {
+    logLock.lock();
+    try {
+        executionLog.add(message);
+    } finally {
+        logLock.unlock();
+    }
+}
 ```
 
-**Justification**: 
+**Justification**: By locking the block where add() is called, we serialize access to the list, preventing memory corruption and internal array index overlapping.
 
 ---
 
 ### Critical Section #3: CPU Semaphore
 
-**Purpose of semaphore**: 
+**Purpose of semaphore**: To control access to the simulated CPU resource during process execution.
 
-**Number of permits and why**: 
+**Number of permits and why**: 1 permit. It acts as a binary semaphore (mutex) because a single CPU core can only execute one process at a time.
 
-**Where implemented**: 
+**Where implemented**: Inside the run() method of the Process class.
 
 **Code snippet**:
 ```java
-// Paste your implementation here
+try {
+    SharedResources.cpuSemaphore.acquire();
+    // Simulate process execution
+    Thread.sleep(executionTime);
+    remainingTime -= executionTime;
+} catch (InterruptedException e) {
+    Thread.currentThread().interrupt();
+} finally {
+    SharedResources.cpuSemaphore.release();
+}
 ```
 
-**Effect on program behavior**: 
+**Effect on program behavior**: It completely prevents concurrent execution overlap. The progress bars now print cleanly and sequentially rather than mixing together in the terminal.
 
 ---
 
