@@ -1,8 +1,8 @@
 # Assignment 3 - Complete Documentation
 
-**Student Name**: [Your Full Name]  
-**Student ID**: [Your ID]  
-**Date Submitted**: [Submission Date]
+**Student Name**: [Mohammed Obaidullah Al-Ghamdi]  
+**Student ID**: [445050131]  
+**Date Submitted**: [May 2 ]
 
 ---
 
@@ -31,68 +31,69 @@
 
 Document your development process with **minimum 3 entries** showing progression:
 
-### Entry 1 - [Date, Time]
-**What I implemented**: 
+### Entry 1 - [ May 2 , 2026 (2:00 )]
+**What I implemented**: I forked the starter repository, updated my Student ID to 445050131, and reviewed the original code to identify the critical sections where race conditions might occur
 
-**Challenges encountered**: 
+**Challenges encountered**: Understanding how multiple threads were modifying the shared counters simultaneously.
 
-**How I solved it**: 
+**How I solved it**: I mapped out all global variables in `SharedResources` that needed synchronization.
 
-**Testing approach**: 
+**Testing approach**: Ran the base code to observe the inconsistent results and exceptions.
 
-**Time spent**: 
-
----
-
-### Entry 2 - [Date, Time]
-**What I implemented**: 
-
-**Challenges encountered**: 
-
-**How I solved it**: 
-
-**Testing approach**: 
-
-**Time spent**: 
+**Time spent**: 1.5 hours
 
 ---
 
-### Entry 3 - [Date, Time]
-**What I implemented**: 
+### Entry 2 - [ May 2, 2026 (3:30 )]
+**What I implemented**: Implemented Task 1 by adding a `ReentrantLock` named `statsLock` to protect the counter variables (`contextSwitchCount`, `completedProcessCount`, `totalWaitingTime`).
 
-**Challenges encountered**: 
+**Challenges encountered**: Deciding whether to use one lock for all counters or separate locks.
 
-**How I solved it**: 
+**How I solved it**: I opted for a single lock (`statsLock`) for simplicity and implemented the `try-finally` block to ensure locks are always released.
 
-**Testing approach**: 
+**Testing approach**: Ran the program multiple times to ensure counters updated consistently without lost increments.
 
-**Time spent**: 
-
----
-
-### Entry 4 - [Date, Time]
-**What I implemented**: 
-
-**Challenges encountered**: 
-
-**How I solved it**: 
-
-**Testing approach**: 
-
-**Time spent**: 
+**Time spent**: 2 hours
 
 ---
 
-### Entry 5 - [Date, Time]
-**What I implemented**: 
+### Entry 3 - May 2, 2026 (5:00 )
+**What I implemented**:Implemented Task 2. I added a separate `ReentrantLock` named `logLock` to protect the `executionLog` ArrayList.
 
-**Challenges encountered**: 
+**Challenges encountered**: The ArrayList is not thread-safe and was throwing `ConcurrentModificationException` during multithreaded operations.
 
-**How I solved it**: 
+**How I solved it**: I wrapped the `executionLog.add()` method inside a `try-finally` block controlled by `logLock`.
 
-**Testing approach**: 
+**Testing approach**: Ran the simulation with 20 processes to verify that the log captured all events without crashing.
 
-**Time spent**: 
+**Time spent**: 1.5 hours 
+
+
+---
+
+### Entry 4 - May 2, 2026 (6:30 )
+**What I implemented**: Implemented Task 3. I added a `Semaphore(1)` to control access to the CPU execution block inside the `run()` method of the Process class.
+
+**Challenges encountered**: Ensuring that a process properly yields the CPU and releases the semaphore even if interrupted.
+
+**How I solved it**: I used `cpuSemaphore.acquire()` before the execution logic and placed `cpuSemaphore.release()` inside the `finally` block of the `run()` method.
+
+**Testing approach**: Monitored the console output to ensure that only one process was executing its quantum at any given millisecond.
+
+**Time spent**: 2 hours
+
+---
+
+### Entry 5 - May 2, 2026 (07:00 )
+**What I implemented**: Finalized the documentation, verified GitHub commits, and recorded the video demonstration.
+
+**Challenges encountered**: Keeping the video explanation concise under 5 minutes while covering all requirements.
+
+**How I solved it**: Wrote a script beforehand to smoothly transition from code walkthrough to program execution.
+
+**Testing approach**: Tested the video link in incognito mode.
+
+**Time spent**: 2 hours
 
 ---
 
@@ -106,7 +107,8 @@ Document your development process with **minimum 3 entries** showing progression
 
 **Your Answer**:
 
-[Your answer here - 4-6 sentences with code examples]
+1. Counter Updates (`contextSwitchCount++`)**: The shared resource is the integer counter. Concurrent access is a problem because `++` is not an atomic operation (it involves reading, incrementing, and writing). If two threads read the same value simultaneously, one increment will be overwritten and lost, resulting in an incorrect lower total count.
+2. Adding to Execution Log (`executionLog.add()`)**: The shared resource is the `ArrayList`. Concurrent access is dangerous because `ArrayList` dynamically resizes. If multiple threads try to add elements simultaneously, the internal array indices might overlap, leading to a `ConcurrentModificationException` or data loss.
 
 ---
 
@@ -115,7 +117,7 @@ Document your development process with **minimum 3 entries** showing progression
 
 **Your Answer**:
 
-[Your answer here - explain your implementation choices]
+[A `ReentrantLock` provides mutual exclusion, meaning only the thread that acquired the lock can release it. I used it for the `statsLock` and `logLock` to protect critical sections modifying shared data (counters and lists). A `Semaphore` is a signaling mechanism based on permits; it restricts how many threads can access a resource simultaneously. I used a Binary Semaphore (`Semaphore(1)`) to act as a gatekeeper for the CPU, ensuring only one process enters the execution state at a time.]
 
 ---
 
@@ -124,7 +126,11 @@ Document your development process with **minimum 3 entries** showing progression
 
 **Your Answer**:
 
-[Your answer here - reference try-finally blocks, lock ordering, etc.]
+[A deadlock is a situation where two or more threads are blocked indefinitely, each waiting for a resource held by another. 
+Two prevention techniques are: 
+1) Lock Ordering: Acquiring multiple locks in a strict, predefined order across all threads.
+2) Guaranteed Release: Ensuring locks are released even if an error occurs.
+In my code, I prevented deadlocks by strictly using the `try-finally` block. I placed `statsLock.unlock()`, `logLock.unlock()`, and `cpuSemaphore.release()` inside `finally` blocks, guaranteeing that the resources are freed even if the thread throws an `InterruptedException`.]
 
 ---
 
@@ -137,7 +143,7 @@ Document your development process with **minimum 3 entries** showing progression
 
 **Your Answer**:
 
-[Your answer here - explain coarse-grained vs fine-grained locking, independence of counters, concurrency implications. Show understanding of when to use each approach. 5-8 sentences expected.]
+[I chose a coarse-grained locking approach by using a single lock (`statsLock`) to protect all three counters (`contextSwitchCount`, `completedProcessCount`, `totalWaitingTime`). I made this choice because it simplifies the code and reduces the risk of deadlocks that might occur from managing multiple nested locks. However, the trade-off is reduced concurrency; if one thread is updating the context switch counter, another thread cannot update the total waiting time simultaneously. Since these three counters are completely independent, a fine-grained approach (one separate lock for each counter) would actually provide better concurrency, allowing non-conflicting updates to happen in parallel.]
 
 ---
 
