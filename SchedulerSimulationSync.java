@@ -44,7 +44,7 @@ class SharedResources {
     
     // TODO #2: Add a Semaphore to limit concurrent process execution
     // Example: public static final Semaphore cpuSemaphore = new Semaphore(1);
-    private static final Semaphore cpuSemaphore = new Semaphore(1);
+   public static final Semaphore cpuSemaphore = new Semaphore(1);
    
     
     // Method to increment context switch counter
@@ -120,7 +120,13 @@ class Process implements Runnable {
     public void run() {
         // TODO #3: Acquire CPU semaphore before executing
         // This ensures only allowed number of processes run simultaneously
-        
+        try {
+            SharedResources.cpuSemaphore.acquire();
+        }
+        catch (InterruptedException e) {
+           e.printStackTrace();
+        }
+
         try {
             if (startTime == -1) {
                 startTime = System.currentTimeMillis();
@@ -183,6 +189,7 @@ class Process implements Runnable {
         } finally {
             // TODO #4: Release CPU semaphore here
             // Always release in finally block to prevent deadlocks!
+            SharedResources.cpuSemaphore.release();
         }
     }
     
